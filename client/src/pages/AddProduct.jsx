@@ -1,7 +1,7 @@
 import { useState } from "react";
-import axios from "axios";
 import toast from "react-hot-toast";
-import { Navigate, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import apiRequest from "../lib/apiRequest";
 
 const AddProduct = () => {
   const [name, setName] = useState("");
@@ -38,7 +38,10 @@ const AddProduct = () => {
       };
 
       // Your API request using axios
-      const response = await axios.post("/api/products", newProduct);
+      const response = await apiRequest().post(
+        "/products/addProduct",
+        newProduct
+      );
 
       toast.dismiss();
       toast.success("Product added successfully");
