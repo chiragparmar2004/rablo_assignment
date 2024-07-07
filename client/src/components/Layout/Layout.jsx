@@ -1,8 +1,8 @@
 import { Outlet, Navigate } from "react-router-dom";
-import "./Layout.css";
 import { useContext } from "react";
 import { AuthContext } from "../../context/AuthContext";
 import Navbar from "../Navbar/Navbar";
+// import "./Layout.css"; // If you still need some custom styles
 
 const ProtectedLayout = () => {
   const { currentUser } = useContext(AuthContext);
@@ -12,11 +12,11 @@ const ProtectedLayout = () => {
   }
 
   return (
-    <div className="layout">
-      <div className="navbar">
+    <div className="flex flex-col h-screen">
+      <div className="h-16">
         <Navbar />
       </div>
-      <div className="content">
+      <div className="flex-grow overflow-auto bg-blue-100">
         <Outlet />
       </div>
     </div>
@@ -25,11 +25,11 @@ const ProtectedLayout = () => {
 
 const Layout = () => {
   return (
-    <div className="layout">
-      <div className="navbar">
+    <div className="flex flex-col h-screen">
+      <div className="h-16">
         <Navbar />
       </div>
-      <div className="content">
+      <div className="flex-grow overflow-auto bg-blue-100">
         <Outlet />
       </div>
     </div>
