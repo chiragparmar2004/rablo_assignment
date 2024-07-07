@@ -1,7 +1,6 @@
 import { useState } from "react";
 import axios from "axios";
 import toast from "react-hot-toast";
-import apiRequest from "../lib/apiRequest";
 import { Navigate, useNavigate } from "react-router-dom";
 
 const AddProduct = () => {
@@ -12,8 +11,21 @@ const AddProduct = () => {
   const [company, setCompany] = useState("");
 
   const navigate = useNavigate();
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Simple validation checks
+    if (!name || !price || !company) {
+      return toast.error("Please fill in all required fields");
+    }
+    if (isNaN(Number(price)) || Number(price) <= 0) {
+      return toast.error("Price must be a valid number greater than zero");
+    }
+    if (isNaN(Number(rating)) || Number(rating) < 0 || Number(rating) > 5) {
+      return toast.error("Rating must be a number between 0 and 5");
+    }
+
     toast.loading("Adding Product...");
 
     try {
@@ -24,10 +36,10 @@ const AddProduct = () => {
         rating: parseFloat(rating),
         company,
       };
-      const response = await apiRequest().post(
-        "/products/addProduct",
-        newProduct
-      );
+
+      // Your API request using axios
+      const response = await axios.post("/api/products", newProduct);
+
       toast.dismiss();
       toast.success("Product added successfully");
       navigate("/");
@@ -87,6 +99,8 @@ const AddProduct = () => {
             className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
             value={rating}
             onChange={(e) => setRating(e.target.value)}
+            min="0"
+            max="5"
             required
           />
         </div>
