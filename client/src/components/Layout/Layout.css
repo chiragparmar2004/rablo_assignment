@@ -1,0 +1,23 @@
+/* Layout.css */
+.layout {
+  display: flex;
+  flex-direction: column; /* Change to column to stack navbar on top */
+  min-height: 100vh;
+}
+
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 60px; /* Adjust height as needed */
+  z-index: 1000; /* Ensure navbar is on top of other content */
+}
+
+.content {
+  height: calc(100vh - 100px);
+  background-color: #2d2d2d; /* Example background color */
+  color: black;
+  padding: 20px;
+  flex-grow: 1;
+}
