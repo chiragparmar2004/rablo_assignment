@@ -5,6 +5,7 @@ import "dotenv/config";
 
 //import routes
 import authRoute from "./routes/auth.route.js";
+import productRoutes from "./routes/product.route.js";
 
 const app = express();
 app.use(express.json());
@@ -19,7 +20,7 @@ app.get("/", (req, res) => {
 });
 
 app.use("/api/auth", authRoute);
-// app.use("/api/products", userRoute);
+app.use("/api/products", productRoutes);
 
 app.listen(PORT, () => {
   console.log(`server listening on port ${PORT}`);
