@@ -1,12 +1,11 @@
+import { v4 as uuidv4 } from "uuid";
 import sendResponse from "../lib/responseHelper.js";
 import { Product } from "../models/product.model.js";
+import { User } from "../models/user.model.js";
 
 // Helper function to validate product fields
 const validateProductFields = (fields) => {
-  const { productId, name, price, company } = fields;
-  if (!productId || typeof productId !== "string") {
-    return "Product ID is required and must be a string";
-  }
+  const { name, price, company } = fields;
   if (!name || typeof name !== "string") {
     return "Name is required and must be a string";
   }
@@ -21,11 +20,10 @@ const validateProductFields = (fields) => {
 
 export const addProduct = async (req, res) => {
   try {
-    const { productId, name, price, featured, rating, createdAt, company } =
-      req.body;
+    const { name, price, featured, rating, company } = req.body;
+    const userId = req.userId;
 
     const validationError = validateProductFields({
-      productId,
       name,
       price,
       company,
@@ -34,15 +32,26 @@ export const addProduct = async (req, res) => {
       return sendResponse(res, 400, validationError);
     }
 
-    const newProduct = await Product.create({
+    const productId = uuidv4();
+    const newProduct = new Product({
       productId,
       name,
       price,
       featured,
       rating,
-      createdAt,
       company,
+      createdBy: userId,
     });
+
+    await newProduct.save();
+
+    // Update the user's products array
+    await User.findByIdAndUpdate(
+      userId,
+      { $push: { products: newProduct._id } },
+      { new: true }
+    );
+
     sendResponse(res, 201, "Product created successfully", newProduct);
   } catch (error) {
     sendResponse(res, 500, error.message);
@@ -61,11 +70,10 @@ export const getAllProducts = async (req, res) => {
 export const updateProduct = async (req, res) => {
   try {
     const { id } = req.params;
-    const { productId, name, price, featured, rating, createdAt, company } =
-      req.body;
+    const { name, price, featured, rating, company } = req.body;
+    const userId = req.userId;
 
     const validationError = validateProductFields({
-      productId,
       name,
       price,
       company,
@@ -74,15 +82,23 @@ export const updateProduct = async (req, res) => {
       return sendResponse(res, 400, validationError);
     }
 
-    const updatedProduct = await Product.findByIdAndUpdate(
-      id,
-      { productId, name, price, featured, rating, createdAt, company },
-      { new: true }
-    );
-    if (!updatedProduct) {
-      return sendResponse(res, 404, "Product not found");
+    const product = await Product.findOne({ _id: id, createdBy: userId });
+    if (!product) {
+      return sendResponse(
+        res,
+        404,
+        "Product not found or you are not authorized to update this product"
+      );
     }
-    sendResponse(res, 200, "Product updated successfully", updatedProduct);
+
+    product.name = name;
+    product.price = price;
+    product.featured = featured;
+    product.rating = rating;
+    product.company = company;
+    await product.save();
+
+    sendResponse(res, 200, "Product updated successfully", product);
   } catch (error) {
     sendResponse(res, 500, error.message);
   }
@@ -91,10 +107,27 @@ export const updateProduct = async (req, res) => {
 export const deleteProduct = async (req, res) => {
   try {
     const { id } = req.params;
-    const deletedProduct = await Product.findByIdAndDelete(id);
-    if (!deletedProduct) {
-      return sendResponse(res, 404, "Product not found");
+    const userId = req.userId;
+
+    const product = await Product.findOneAndDelete({
+      _id: id,
+      createdBy: userId,
+    });
+    if (!product) {
+      return sendResponse(
+        res,
+        404,
+        "Product not found or you are not authorized to delete this product"
+      );
     }
+
+    // Update the user's products array
+    await User.findByIdAndUpdate(
+      userId,
+      { $pull: { products: id } },
+      { new: true }
+    );
+
     sendResponse(res, 200, "Product deleted successfully");
   } catch (error) {
     sendResponse(res, 500, error.message);
@@ -146,6 +179,17 @@ export const fetchProductsByRating = async (req, res) => {
       `Products with rating higher than ${value} retrieved successfully`,
       products
     );
+  } catch (error) {
+    sendResponse(res, 500, error.message);
+  }
+};
+
+// New function to fetch products created by the logged-in user
+export const fetchMyProducts = async (req, res) => {
+  try {
+    const userId = req.userId;
+    const products = await Product.find({ createdBy: userId });
+    sendResponse(res, 200, "Your products retrieved successfully", products);
   } catch (error) {
     sendResponse(res, 500, error.message);
   }
